@@ -1,0 +1,171 @@
+We used three methods to match Snopes articles and the corresponding claims.
+The first method is called Link Extraction: for each Snopes page, extract all
+links and find these exist in our collected claims. The second method is
+called Social Fact-checking: if there is a tweet containing a claim article URL
+and its reply does the fact-checking by sharing a Snopes article, then we think
+the claim and the Snopes article are matched.
+The last method is a manual one: from the top spreading claims,
+we search the Snopes site by hand to find these fact-checked ones.
+
+Since the first two methods are automatic and the data size is limited, we
+examed each pair, first remove some noise entry, e.g., URLs end with 'about',
+'disclaimer', 'about-us' and etc., which are definitely not story articles.
+Then we look into each page of a pair to manually check whether they are
+correctly matched. The result shows that Link Extraction get a reasonable
+precision(about 83%), while Social Fact-checking is a bit lower precision (about 70%).
+Also the total number of snopes pages used in these two method is about 4000,
+so that the recall is rather low (less than 10%).
+This result could give us an insight that automatic approaches to get matched
+pair of stories are valuable, but there is a big space to improve the precision
+and recall.
+
+(Do we need to talk about more about the recall?)
+
+Table I
+
+Page link extraction 92/110 = 0.8364
+Social fact-checking by reply 24/34 = 0.7059
+Social fact-checking by quote 136/197 = 0.6904
+Manual search 20
+Total correct match 234/323 = 0.7244
+
+The closely investigate these correct mathed pairs, we define two variables.
+One is $\Delta$, which is the time lag between the publish date of a claim and
+its Snopes debunking. The other one is $\lambda$, which is the volume of tweets
+sharing a claim before the publish of its Snopes debunking. To obtain the data
+of these two variables, we need to do the following cleanings:
+
+(1) Our tweet collection starts on 2016-05-16, remove entries whoes publish date
+    go ahead of this date.
+(2) There are cases when publish date of a claim is behind its Snopes debunking.
+We found two classical reasons. One is reaccurrence. A same claim could reaccur
+on varies of claims site over time. For example, a claim states that "muslim
+nurses refuse to wash hands before operations, say it compromises religious
+beliefs" first appeared on [theuspatriot](http://theuspatriot.com/2014/04/15/muslim-nurses-refuse-to-wash-hands-before-operations-say-it-compromises-________/)
+on 2014-04-15, then we found it reaccured on [jewsnews.co.il](http://www.jewsnews.co.il/2014/10/20/muslim-nurses-refuse-to-wash-hands-before-operations-say-it-compromises-religious-beliefs.html)
+on 2014-10-20, with same content.
+http://www.snopes.com/politics/religion/muslimnurses.asp, first 2014-10-22
+
+The other one is evolution. A series of similar claims are fabricated over time
+to make an opinion sound reasonable. For example, Infowars had published a series
+of articles to express the opinion that Jill Stein (a green party candiate) endorsed
+Donald Trump during the 2017 election. On 2016-06-13, an article with claim
+"Green Party Candidate Jill Stein Says Hillary Clinton Could Be Worse Than Donald Trump"
+was first published, then another article with claim "Jill Stein Agrees with Trump: Hillary Clinton Presidency Means Nuclear War, a ‘Mushroom Cloud Waiting to Happen’"
+was published on 2017-11-07. Both of them are trying to reinforce the opinion that
+Jill Stein surport Donald Trump.
+
+http://www.snopes.com/jill-stein-endorsed-donald-trump/
+http://www.infowars.com/green-party-candidate-jill-stein-says-hillary-clinton-could-be-worse-than-donald-trump/
+http://www.infowars.com/jill-stein-agrees-with-trump-hillary-clinton-presidency-means-nuclear-war-a-mushroom-cloud-waiting-to-happen/
+
+Above all, if the publish date of a claim goes behind its snopes debunking, it means that
+we didn't found the first appeared claim, so remove these entries.
+
+(3) The claim site domains are added incrementally, we may miss the
+tweet collection of the claims that are added later. Remove these articles
+whoes tweet collection are not integrety.
+http://empirenews.net/monica-lewinsky-says-she-is-voting-for-hillary-clinton/
+http://politicops.com/mike-pence-allowing-rape-victims-abortions-will-lead-women-trying-get-raped/
+http://politicops.com/palin-calls-boycott-mall-america-santa-always-white-bible/
+http://politicops.com/pat-robertson-melanias-nude-pics-pure-art-shows-beauty-gods-work/
+http://politicops.com/ted-nugent-dont-get-chimp-gets-invoke-human-rights/
+http://politicops.com/turners-father-girl-got-no-punishment-slut/
+
+
+(4) In order to get precise $\Delta$ and $v$, we need to fetch the precise
+publish datetime of articles. Most of these articles provide a precise publish
+date as meta property in their HTML code. However, some articles mark their
+publish date as human readable text. This kind of publish date is difficult to
+automatically fetch and it is not precise as it contains only date part (year, month and day),
+no information about time (hour, minute and second), nor timezone information.
+So we need to remove these entries.
+
+
+73 pairs, the claims are comes from 14 different site:
+21stcenturywire.com @21WIRE, 
+activistpost.com @ActivistPost
+beforeitsnews.com @beforeitsnews
+clickhole.com @ClickHole
+dcclothesline.com @DCClothesline
+infowars.com @infowars
+intellihub.com @intellihubnews
+nationalreport.net NotFound
+newslo.com @TheNewslo
+nowtheendbegins.com  @NowTheEndBegins
+realfarmacy.com @REALfarmacy
+realnewsrightnow.com NotFound
+worldnewsdailyreport.com NotFound
+worldtruth.tv @WorldTruthTV
+
+
+A special cases
+hoaxy=> select f_pd, f_ftw, f_n, fake from t_snopes_mv_final where extract(epoch from (f_ftw-f_pd))/3600<-1 order by f_pd-f_ftw, fake;
+        f_pd         |        f_ftw        | f_n  |                                                                       fake
+
+---------------------+---------------------+------+----------------------------------------------------------------------------------------------------------------------
+----------------------------
+ 2016-09-28 12:27:58 | 2016-09-28 10:54:51 |  210 | http://www.infowars.com/emergency-hillary-globalists-shutting-down-opposition-media/
+ 2016-07-06 11:08:41 | 2016-07-06 09:09:26 | 1047 | http://www.dcclothesline.com/2016/07/06/hacked-messages-of-blacklivesmatter-leader-reveal-obama-admins-plan-for-summe
+r-of-chaos-and-martial-law/
+ 2016-08-17 17:57:16 | 2016-08-17 15:37:59 | 5149 | http://www.infowars.com/dr-drew-gravely-concerned-about-hillary-clintons-health/
+ 2016-11-30 06:27:59 | 2016-11-30 00:19:05 |   45 | http://www.activistpost.com/2016/11/sheriffs-dept-fine-people-1k-bringing-food-supplies-standing-rock.html
+ 2016-08-15 10:21:33 | 2016-08-14 23:26:10 | 5583 | http://www.infowars.com/secret-service-leaks-hillarys-health-to-press/
+ 2016-10-11 10:48:17 | 2016-10-10 22:04:23 | 6663 | http://www.infowars.com/clinton-campaign-email-outlines-effort-to-produce-an-unaware-and-compliant-citizenry/
+ 2016-11-15 12:04:13 | 2016-09-12 21:56:42 | 6851 | http://www.infowars.com/report-hillary-became-physically-violent-after-she-realized-she-had-lost-the-election/
+ 2016-11-04 19:25:00 | 2016-05-16 07:55:19 |  996 | http://www.infowars.com/bombshell-hillary-clintons-satanic-network-exposed/
+(8 rows)
+
+
+
+select tw.json_data->>'created_at', tw.json_data#>>'{entities, urls}' from tweet as tw join ass_tweet_url as atu on atu.tweet_id=tw.id join url as u on u.id=atu.url_id where u.canonical like 'http://www.infowars.com/bombshell-hillary-clintons-satanic-network-exposed/' or u.expanded like 'http://www.infowars.com/bombshell-hillary-clintons-satanic-network-exposed/' or u.raw like 'http://www.infowars.com/bombshell-hillary-clintons-satanic-network-exposed/' order by tw.created_at limit 1;
+            ?column?            |                                                                            ?column?
+
+--------------------------------+----------------------------------------------------------------------------------------------------------------------------------------
+-------------------------
+ Mon May 16 07:55:19 +0000 2016 | [{"url": "https://t.co/mToEspry3X", "indices": [112, 135], "expanded_url": "http://infowars.com/bombshell-hill", "display_url": "infowa
+rs.com/bombshell-hill"}]
+
+
+select tw.json_data->>'created_at', tw.json_data#>>'{entities, urls}' from tweet as tw join ass_tweet_url as atu on atu.tweet_id=tw.id join url as u on u.id=atu.url_id where u.canonical like 'http://www.infowars.com/report-hillary-became-physically-violent-after-she-realized-she-had-lost-the-election/' or u.expanded like 'http://www.infowars.com/report-hillary-became-physically-violent-after-she-realized-she-had-lost-the-election/' or u.raw like 'http://www.infowars.com/report-hillary-became-physically-violent-after-she-realized-she-had-lost-the-election/' order by tw.created_at limit 1;
+            ?column?            |                                                                           ?column?
+
+--------------------------------+----------------------------------------------------------------------------------------------------------------------------------------
+-----------------------
+ Mon Sep 12 21:56:42 +0000 2016 | [{"url": "https://t.co/XDbFwC51uT", "indices": [48, 71], "expanded_url": "http://infowars.com/report-hillary", "display_url": "infowars
+.com/report-hillary"}]
+
+
+hoaxy=> select tw.created_at from tweet as tw join ass_tweet_url as atu on atu.tweet_id=tw.id join url as u on u.id=atu.url_id where u.raw like 'http://www.infowars.com/bombshell-hillary-clintons-satanic-network-exposed/' order by tw.created_at limit 1;
+     created_at
+---------------------
+ 2016-11-04 18:26:40
+(1 row)
+
+hoaxy=> select tw.created_at from tweet as tw join ass_tweet_url as atu on atu.tweet_id=tw.id join url as u on u.id=atu.url_id where u.raw like 'http://www.infowars.com/report-hillary-became-physically-violent-after-she-realized-she-had-lost-the-election/' order by tw.created_at limit 1;
+     created_at
+---------------------
+ 2016-11-15 12:00:27
+(1 row)
+
+
+select count(distinct tw.id) from tweet as tw join ass_tweet_url as atu on atu.tweet_id=tw.id
+join url as u on u.id=atu.url_id where
+(u.canonical like ''
+or u.expanded like ''
+or u.raw like '')
+and tw.created_at between '' and '';
+
+select count(distinct tw.id) from tweet as tw join ass_tweet_url as atu on atu.tweet_id=tw.id
+join url as u on u.id=atu.url_id where
+(u.canonical like 'http://www.infowars.com/bombshell-hillary-clintons-satanic-network-exposed/'
+or u.expanded like 'http://www.infowars.com/bombshell-hillary-clintons-satanic-network-exposed/'
+or u.raw like 'http://www.infowars.com/bombshell-hillary-clintons-satanic-network-exposed/')
+and tw.created_at between '2016-11-04 18:26:40' and '2016-11-04 21:50:02';
+
+select count(distinct tw.id) from tweet as tw join ass_tweet_url as atu on atu.tweet_id=tw.id
+join url as u on u.id=atu.url_id where
+(u.canonical like 'http://www.infowars.com/report-hillary-became-physically-violent-after-she-realized-she-had-lost-the-election/'
+or u.expanded like 'http://www.infowars.com/report-hillary-became-physically-violent-after-she-realized-she-had-lost-the-election/'
+or u.raw like 'http://www.infowars.com/report-hillary-became-physically-violent-after-she-realized-she-had-lost-the-election/')
+and tw.created_at between '2016-11-15 12:00:27' and '2016-11-16 06:16:08';
