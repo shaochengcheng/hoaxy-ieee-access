@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from matplotlib_venn import venn2
+# from matplotlib_venn import venn2
 from lifelines import KaplanMeierFitter
 from lifelines import NelsonAalenFitter
+from wordcloud import  WordCloud
 import numpy as np
 import pandas as pd
 from os.path import join
@@ -21,6 +22,24 @@ try:
     from urlparse import urlparse
 except ImportError:
     from urllib.parse import urlparse
+
+
+def ccdf(s):
+    """
+    Parameters:
+        `s`, series, the values of s should be variable to be handled
+    Return:
+        a new series `s`, index of s will be X axis (number), value of s
+        will be Y axis (probability)
+    """
+    s = s.copy()
+    s = s.sort_values(ascending=True, inplace=False)
+    s.reset_index(drop=True, inplace=True)
+    n = len(s)
+    s.drop_duplicates(keep='first', inplace=True)
+    X = s.values
+    Y = [n - i for i in s.index]
+    return pd.Series(data=Y, index=X) / n
 
 
 def get_site_name(url):
@@ -784,3 +803,138 @@ def bot_score_dist2(fn1='fake_bot_score.json',
     plt.ylabel('Frequency')
     plt.tight_layout()
     plt.savefig(output)
+
+
+def diffusion_ccdf(fn1='t_snopes_mv_fake_tweet.csv',
+                   fn2='t_snopes_mv_snopes_tweet.csv',
+                   output='diffusion-ccdf.pdf'):
+    fn1 = join(DATA_DIR, fn1)
+    fn2 = join(DATA_DIR, fn2)
+    df1 = pd.read_csv(fn1)
+    df2 = pd.read_csv(fn2)
+    s11 = df1.groupby('fake').tweet_id.nunique()
+    s12 = df1.groupby('fake').tweet_user_id.nunique()
+    s21 = df2.groupby('snopes').tweet_id.nunique()
+    s22 = df2.groupby('snopes').tweet_user_id.nunique()
+    s11 = ccdf(s11)
+    s12 = ccdf(s12)
+    s21 = ccdf(s21)
+    s22 = ccdf(s22)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6.4, 2.4))
+    ax1.plot(s11.index, s11.values, label='Claim')
+    ax1.plot(s21.index, s21.values, label='Snopes')
+    ax1.set_xscale('log')
+    ax1.set_yscale('log')
+    ax1.set_xlabel('$n_1$')
+    ax1.set_ylabel(r'$Pr\left\{N\geq n_1\right\}$')
+    ax1.text(x=0.5, y=-0.48, s='(a) Article Popularity by Tweets',
+            horizontalalignment='center',
+            transform=ax1.transAxes)
+    ax1.legend(fontsize=9)
+    ax2.plot(s12.index, s12.values, label='Claim')
+    ax2.plot(s22.index, s22.values, label='Snopes')
+    ax2.set_xscale('log')
+    ax2.set_yscale('log')
+    ax2.set_xlabel('$n_2$')
+    ax2.set_ylabel(r'$Pr\left\{N\geq n_2\right\}$')
+    ax2.text(x=0.5, y=-0.48, s='(b) Article Popularity by Users',
+            horizontalalignment='center',
+            transform=ax2.transAxes)
+    ax2.legend(fontsize=9)
+    plt.tight_layout(rect=[0,0.06,1,1], w_pad=2.4)
+    plt.savefig(output)
+
+
+def case_study1(fn='case_studies_I_article_id_108396.json',
+                ofn='case-studies-I.pdf'
+                ):
+    fn = join(DATA_DIR, fn)
+    with open(fn, 'r') as f:
+        data = json.load(f, encoding='utf-8')
+    df = pd.DataFrame(data)
+    df = df.drop_duplicates('id')
+    df['user_screen_name'] = df.user.apply(lambda x: x['screen_name'])
+    rs = dict()
+    rs['ntotal'] = len(df)
+    rs['hub_user_screen_name'] = df.groupby('user_screen_name').size().idxmax()
+    rs['hub_user_tweets_n'] = df.groupby('user_screen_name').size().max()
+    rs['hub_user_tweets_r'] = float(rs['hub_user_tweets_n']) / rs['ntotal']
+    df2 = df.loc[(df.user_screen_name == rs['hub_user_screen_name'])
+            & (df.in_reply_to_status_id.isnull())
+            & (df.retweeted_status.isnull())
+            & (df.quoted_status.isnull())
+            ]
+    rs['hub_user_origins_n'] = len(df2)
+    rs['hub_user_origins_r'] = float(rs['hub_user_origins_n']) / rs['hub_user_tweets_n']
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3.15))
+    patches, texts, autotexts = ax1.pie(
+            [ rs['hub_user_tweets_n'], rs['ntotal']-rs['hub_user_tweets_n']],
+            labels=['@'+rs['hub_user_screen_name'], 'Others'],
+            explode=(0, 0.1),
+            colors=('lightcoral', 'lightskyblue'),
+            autopct='%1.1f%%',
+            shadow=True,
+            radius=1,
+            startangle=180-7.2,
+            labeldistance=1.15,
+            textprops=dict( ha='center', family='monospace', fontsize=9),
+            )
+    df2.loc[:, 'created_at'] = pd.to_datetime(df2.created_at)
+    df2.set_index('created_at', inplace=True)
+    df2.resample('1D').size().plot(ax=ax2, logy=True, legend=False)
+    ax1.text(x=0, y=-1.85, s='(a) Shares of tweets', ha='center', fontsize=9.5)
+    ax2.set_xlabel('(b) Timeline of @{}'.format(
+        rs['hub_user_screen_name']), fontsize=9.5)
+    ax2.set_ylabel('Volume')
+    plt.tight_layout(pad=0.5)
+    plt.savefig(ofn)
+
+
+def case_study3(fn='case_studies_III.json',
+                ofn='case-studies-III.pdf'
+                ):
+    fn = join(DATA_DIR, fn)
+    with open(fn, 'r') as f:
+        data = json.load(f, encoding='utf-8')
+    df = pd.DataFrame(data)
+    df = df.drop_duplicates('id')
+    df['user_screen_name'] = df.user.apply(lambda x: x['screen_name'])
+    rs = dict()
+    rs['ntotal'] = len(df)
+    rs['hub_user_screen_name'] = df.groupby('user_screen_name').size().idxmax()
+    rs['hub_user_tweets_n'] = df.groupby('user_screen_name').size().max()
+    rs['hub_user_tweets_r'] = float(rs['hub_user_tweets_n']) / rs['ntotal']
+    df2 = df.loc[(df.user_screen_name == rs['hub_user_screen_name'])
+            & (df.in_reply_to_status_id.notnull()) ]
+    rs['hub_user_replies_n'] = len(df2)
+    rs['hub_user_replies_r'] = float(rs['hub_user_replies_n']) / rs['hub_user_tweets_n']
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 2.6),
+                                   gridspec_kw=dict(width_ratios=[2, 3])
+                                 )
+    patches, texts, autotexts = ax1.pie(
+            [ rs['hub_user_tweets_n'], rs['ntotal']-rs['hub_user_tweets_n']],
+            labels=['@'+rs['hub_user_screen_name'], 'Others'],
+            explode=(0, 0.1),
+            colors=('lightcoral', 'lightskyblue'),
+            autopct='%1.1f%%',
+            shadow=True,
+            radius=1,
+            startangle=180-7.2,
+            labeldistance=1.15,
+            textprops=dict( ha='center', family='monospace', fontsize=9),
+            )
+    wc = WordCloud(width=800, height=400,
+                    background_color='white',
+                    colormap='inferno'
+            ).generate_from_frequencies(
+        df2['in_reply_to_screen_name'].value_counts().to_dict())
+    ax2.imshow(wc, interpolation="bilinear")
+    ax2.set_axis_off()
+    ax1.text(x=0, y=-1.6, s='(a) Shares of tweets', ha='center', fontsize=9.5)
+    ax2.text(x=0.5, y=-0.34, s='(b) Word cloud of screen names of the replied',
+        ha='center', fontsize=9.5, transform=ax2.transAxes)
+    plt.tight_layout(rect=[0,0.1,1,1])
+    plt.savefig(ofn)
+
