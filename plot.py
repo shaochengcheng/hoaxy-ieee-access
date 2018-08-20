@@ -3,7 +3,7 @@ import matplotlib.gridspec as gridspec
 # from matplotlib_venn import venn2
 from lifelines import KaplanMeierFitter
 from lifelines import NelsonAalenFitter
-from wordcloud import  WordCloud
+from wordcloud import WordCloud
 import numpy as np
 import pandas as pd
 from os.path import join
@@ -130,8 +130,8 @@ def timeline(data_dir=DATA_DIR,
 
 
 def timeline2(data_dir=DATA_DIR,
-             fn1='t_snopes_mv_fake_tweet.csv',
-             fn2='t_snopes_mv_snopes_tweet.csv'):
+              fn1='t_snopes_mv_fake_tweet.csv',
+              fn2='t_snopes_mv_snopes_tweet.csv'):
     output = 'Fig3-timeline.pdf'
     fn1 = join(data_dir, fn1)
     fn2 = join(data_dir, fn2)
@@ -151,8 +151,6 @@ def timeline2(data_dir=DATA_DIR,
     plt.legend()
     plt.tight_layout()
     plt.savefig(output)
-
-
 
 
 def tsa_sma_hourly(ts, window=24, center=True, drop_na=True):
@@ -205,7 +203,7 @@ def timeline_ccf(data_dir=DATA_DIR,
     ax.plot(ccf.index, ccf.values, color='k')
     data_to_axis = ax.transData + ax.transAxes.inverted()
     amx, amy = data_to_axis.transform((mx, my))
-    ax.axvline(x=mx, ymax=amy-0.15, linestyle='dotted', color='k')
+    ax.axvline(x=mx, ymax=amy - 0.15, linestyle='dotted', color='k')
     ax.text(
         x=mx,
         y=my + 0.06,
@@ -224,11 +222,11 @@ def timeline_ccf(data_dir=DATA_DIR,
 
 
 def timeline_ccf2(data_dir=DATA_DIR,
-                 fn1='t_snopes_mv_snopes_tweet.csv',
-                 fn2='t_snopes_mv_fake_tweet.csv',
-                 max_lag=7,
-                 freq='1D',
-                 do_sma=False):
+                  fn1='t_snopes_mv_snopes_tweet.csv',
+                  fn2='t_snopes_mv_fake_tweet.csv',
+                  max_lag=7,
+                  freq='1D',
+                  do_sma=False):
     output = 'Fig4-timeline-ccf.pdf'
     fn1 = join(data_dir, fn1)
     fn2 = join(data_dir, fn2)
@@ -248,7 +246,7 @@ def timeline_ccf2(data_dir=DATA_DIR,
     ax.plot(ccf.index, ccf.values, color='k')
     data_to_axis = ax.transData + ax.transAxes.inverted()
     amx, amy = data_to_axis.transform((mx, my))
-    ax.axvline(x=mx, ymax=amy-0.15, linestyle='dotted', color='k')
+    ax.axvline(x=mx, ymax=amy - 0.15, linestyle='dotted', color='k')
     ax.text(
         x=mx,
         y=my + 0.04,
@@ -283,13 +281,15 @@ def prepare_plot_frac_over_total(f1, f2, p):
     return pd.Panel(
         dict(
             all=pd.DataFrame(
-                [(sa1['origin'], sa2['origin']), (sa1['retweet'], sa2[
-                    'retweet']), (sa1['reply'], sa2['reply'])],
+                [(sa1['origin'], sa2['origin']),
+                 (sa1['retweet'], sa2['retweet']),
+                 (sa1['reply'], sa2['reply'])],
                 columns=['fake news', 'snopes'],
                 index=['origin', 'retweet', 'reply']),
             top=pd.DataFrame(
-                [(st1['origin'], st2['origin']), (st1['retweet'], st2[
-                    'retweet']), (st1['reply'], st2['reply'])],
+                [(st1['origin'], st2['origin']),
+                 (st1['retweet'], st2['retweet']),
+                 (st1['reply'], st2['reply'])],
                 columns=['fake news', 'snopes'],
                 index=['origin', 'retweet', 'reply'])))
 
@@ -334,8 +334,8 @@ def tw_type_share1(data_dir=DATA_DIR,
     ax.set_xticklabels(['Origin', 'Retweet', 'Reply'])
     ax.set_ylim([0, 0.8])
     plt.subplots_adjust(left=0.16, right=0.98, bottom=0.128, top=0.84)
-    ax.legend((rects1[0], rects2[0]),
-              ('Fake news', 'Snopes'),
+    ax.legend(
+        (rects1[0], rects2[0]), ('Fake news', 'Snopes'),
         fontsize=8.5,
         bbox_to_anchor=(0, 1.04, 1., 0.104),
         loc=3,
@@ -533,13 +533,8 @@ def story_pair_tweets_volumn(data_dir=DATA_DIR,
             ts2 = ts2.fillna(1)
         else:
             ts2 = ts2.fillna(0)
-        ts2.plot(
-            ax=ax,
-            logy=logy,
-            label='Fake news, URL1',
-            color=C1)
-    ts1.plot(
-        ax=ax, logy=logy, label='Snopes, URL2', color=C2)
+        ts2.plot(ax=ax, logy=logy, label='Fake news, URL1', color=C1)
+    ts1.plot(ax=ax, logy=logy, label='Snopes, URL2', color=C2)
     ax.set_ylabel('Tweets volume')
     plt.legend()
     plt.tight_layout()
@@ -581,8 +576,8 @@ def delay_dist_bar(fn='t_snopes_match_delay0104.csv'):
     s_cat = [
         delta_s[delta_s < 24], delta_s[(24 <= delta_s) & (delta_s < 24 * 7)],
         delta_s[(24 * 7 <= delta_s) & (delta_s < 24 * 30)],
-        delta_s[(24 * 30 <= delta_s) &
-                (delta_s < 24 * 365)], delta_s[delta_s >= 24 * 365]
+        delta_s[(24 * 30 <= delta_s) & (delta_s < 24 * 365)],
+        delta_s[delta_s >= 24 * 365]
     ]
 
     s_bar_names = ['Day', 'Week', 'Month', 'Year', '>Year']
@@ -695,7 +690,7 @@ def survival_by_lag_KM2(fn='t_snopes_match_volume0104.csv'):
     kmf2.fit(T2, E2)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize, sharey=True)
     kmf1.plot(ax=ax1)
-    ax1.axvline(x=7*24, ymax=0.32, linestyle='dotted', color='k')
+    ax1.axvline(x=7 * 24, ymax=0.32, linestyle='dotted', color='k')
     ax1.axhline(y=0.32, xmax=0.05, linestyle='dotted', color='k')
     ax1.text(
         x=15 * 24,
@@ -721,8 +716,6 @@ def survival_by_lag_KM2(fn='t_snopes_match_volume0104.csv'):
     plt.savefig(output)
 
 
-
-
 def bot_score_dist(fn1='fake_bot_score.json',
                    fn2='snopes_bot_score.json',
                    nbins=20):
@@ -746,7 +739,8 @@ def bot_score_dist(fn1='fake_bot_score.json',
     s1 = np.array(s1)
     s2 = np.array(s2)
     logger.info('Fake, ratio larger than 0.5: %s', (s1 > 0.5).sum() / len(s1))
-    logger.info('Snopes, ratio larger than 0.5: %s', (s2 > 0.5).sum() / len(s2))
+    logger.info('Snopes, ratio larger than 0.5: %s',
+                (s2 > 0.5).sum() / len(s2))
     fig, ax = plt.subplots(figsize=(2.5, 1.8))
     bins = np.linspace(0, 1, nbins + 1)
     w1 = np.ones_like(s1) / len(s1)
@@ -754,7 +748,8 @@ def bot_score_dist(fn1='fake_bot_score.json',
     ax.hist(s1, bins, weights=w1, alpha=0.75, label='Fake news', color=C1)
     ax.hist(s2, bins, weights=w2, alpha=0.75, label='Snopes', color=C2)
     plt.subplots_adjust(left=0.2, right=0.98, bottom=0.23, top=0.845)
-    ax.legend( fontsize=8.5,
+    ax.legend(
+        fontsize=8.5,
         bbox_to_anchor=(-0.06, 1.04, 1.06, 0.104),
         loc=3,
         ncol=2,
@@ -767,8 +762,8 @@ def bot_score_dist(fn1='fake_bot_score.json',
 
 
 def bot_score_dist2(fn1='fake_bot_score.json',
-                   fn2='snopes_bot_score.json',
-                   nbins=20):
+                    fn2='snopes_bot_score.json',
+                    nbins=20):
     fn1 = join(DATA_DIR, fn1)
     fn2 = join(DATA_DIR, fn2)
     output = 'Fig7-bot-score.pdf'
@@ -791,7 +786,8 @@ def bot_score_dist2(fn1='fake_bot_score.json',
     logger.info('Fake, mean=%s, std=%s', s1.mean(), s1.std())
     logger.info('Snopes, mean=%s, std=%s', s2.mean(), s2.mean())
     logger.info('Fake, ratio larger than 0.5: %s', (s1 > 0.5).sum() / len(s1))
-    logger.info('Snopes, ratio larger than 0.5: %s', (s2 > 0.5).sum() / len(s2))
+    logger.info('Snopes, ratio larger than 0.5: %s',
+                (s2 > 0.5).sum() / len(s2))
     fig, ax = plt.subplots(figsize=(4, 3))
     bins = np.linspace(0, 1, nbins + 1)
     w1 = np.ones_like(s1) / len(s1)
@@ -827,9 +823,12 @@ def diffusion_ccdf(fn1='t_snopes_mv_fake_tweet.csv',
     ax1.set_yscale('log')
     ax1.set_xlabel('$n_1$')
     ax1.set_ylabel(r'$Pr\left\{N\geq n_1\right\}$')
-    ax1.text(x=0.5, y=-0.48, s='(a) Article Popularity by Tweets',
-            horizontalalignment='center',
-            transform=ax1.transAxes)
+    ax1.text(
+        x=0.5,
+        y=-0.48,
+        s='(a) Article Popularity by Tweets',
+        horizontalalignment='center',
+        transform=ax1.transAxes)
     ax1.legend(fontsize=9)
     ax2.plot(s12.index, s12.values, label='Claim')
     ax2.plot(s22.index, s22.values, label='Snopes')
@@ -837,17 +836,19 @@ def diffusion_ccdf(fn1='t_snopes_mv_fake_tweet.csv',
     ax2.set_yscale('log')
     ax2.set_xlabel('$n_2$')
     ax2.set_ylabel(r'$Pr\left\{N\geq n_2\right\}$')
-    ax2.text(x=0.5, y=-0.48, s='(b) Article Popularity by Users',
-            horizontalalignment='center',
-            transform=ax2.transAxes)
+    ax2.text(
+        x=0.5,
+        y=-0.48,
+        s='(b) Article Popularity by Users',
+        horizontalalignment='center',
+        transform=ax2.transAxes)
     ax2.legend(fontsize=9)
-    plt.tight_layout(rect=[0,0.06,1,1], w_pad=2.4)
+    plt.tight_layout(rect=[0, 0.06, 1, 1], w_pad=2.4)
     plt.savefig(output)
 
 
 def case_study1(fn='case_studies_I_article_id_108396.json',
-                ofn='case-studies-I.pdf'
-                ):
+                ofn='case-studies-I.pdf'):
     fn = join(DATA_DIR, fn)
     with open(fn, 'r') as f:
         data = json.load(f, encoding='utf-8')
@@ -860,40 +861,39 @@ def case_study1(fn='case_studies_I_article_id_108396.json',
     rs['hub_user_tweets_n'] = df.groupby('user_screen_name').size().max()
     rs['hub_user_tweets_r'] = float(rs['hub_user_tweets_n']) / rs['ntotal']
     df2 = df.loc[(df.user_screen_name == rs['hub_user_screen_name'])
-            & (df.in_reply_to_status_id.isnull())
-            & (df.retweeted_status.isnull())
-            & (df.quoted_status.isnull())
-            ]
+                 & (df.in_reply_to_status_id.isnull())
+                 & (df.retweeted_status.isnull())
+                 & (df.quoted_status.isnull())]
     rs['hub_user_origins_n'] = len(df2)
-    rs['hub_user_origins_r'] = float(rs['hub_user_origins_n']) / rs['hub_user_tweets_n']
+    rs['hub_user_origins_r'] = float(
+        rs['hub_user_origins_n']) / rs['hub_user_tweets_n']
+    print(rs)
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3.15))
     patches, texts, autotexts = ax1.pie(
-            [ rs['hub_user_tweets_n'], rs['ntotal']-rs['hub_user_tweets_n']],
-            labels=['@'+rs['hub_user_screen_name'], 'Others'],
-            explode=(0, 0.1),
-            colors=('lightcoral', 'lightskyblue'),
-            autopct='%1.1f%%',
-            shadow=True,
-            radius=1,
-            startangle=180-7.2,
-            labeldistance=1.15,
-            textprops=dict( ha='center', family='monospace', fontsize=9),
-            )
+        [rs['hub_user_tweets_n'], rs['ntotal'] - rs['hub_user_tweets_n']],
+        labels=['@' + rs['hub_user_screen_name'], 'Others'],
+        explode=(0, 0.1),
+        colors=('lightcoral', 'lightskyblue'),
+        autopct='%1.1f%%',
+        shadow=True,
+        radius=1,
+        startangle=180 - 7.2,
+        labeldistance=1.15,
+        textprops=dict(ha='center', family='monospace', fontsize=9),
+    )
     df2.loc[:, 'created_at'] = pd.to_datetime(df2.created_at)
     df2.set_index('created_at', inplace=True)
     df2.resample('1D').size().plot(ax=ax2, logy=True, legend=False)
     ax1.text(x=0, y=-1.85, s='(a) Shares of tweets', ha='center', fontsize=9.5)
-    ax2.set_xlabel('(b) Timeline of @{}'.format(
-        rs['hub_user_screen_name']), fontsize=9.5)
+    ax2.set_xlabel(
+        '(b) Timeline of @{}'.format(rs['hub_user_screen_name']), fontsize=9.5)
     ax2.set_ylabel('Volume')
     plt.tight_layout(pad=0.5)
     plt.savefig(ofn)
 
 
-def case_study3(fn='case_studies_III.json',
-                ofn='case-studies-III.pdf'
-                ):
+def case_study3(fn='case_studies_III.json', ofn='case-studies-III.pdf'):
     fn = join(DATA_DIR, fn)
     with open(fn, 'r') as f:
         data = json.load(f, encoding='utf-8')
@@ -906,35 +906,38 @@ def case_study3(fn='case_studies_III.json',
     rs['hub_user_tweets_n'] = df.groupby('user_screen_name').size().max()
     rs['hub_user_tweets_r'] = float(rs['hub_user_tweets_n']) / rs['ntotal']
     df2 = df.loc[(df.user_screen_name == rs['hub_user_screen_name'])
-            & (df.in_reply_to_status_id.notnull()) ]
+                 & (df.in_reply_to_status_id.notnull())]
     rs['hub_user_replies_n'] = len(df2)
-    rs['hub_user_replies_r'] = float(rs['hub_user_replies_n']) / rs['hub_user_tweets_n']
+    rs['hub_user_replies_r'] = float(
+        rs['hub_user_replies_n']) / rs['hub_user_tweets_n']
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 2.6),
-                                   gridspec_kw=dict(width_ratios=[2, 3])
-                                 )
+    fig, (ax1, ax2) = plt.subplots(
+        1, 2, figsize=(6, 2.6), gridspec_kw=dict(width_ratios=[2, 3]))
     patches, texts, autotexts = ax1.pie(
-            [ rs['hub_user_tweets_n'], rs['ntotal']-rs['hub_user_tweets_n']],
-            labels=['@'+rs['hub_user_screen_name'], 'Others'],
-            explode=(0, 0.1),
-            colors=('lightcoral', 'lightskyblue'),
-            autopct='%1.1f%%',
-            shadow=True,
-            radius=1,
-            startangle=180-7.2,
-            labeldistance=1.15,
-            textprops=dict( ha='center', family='monospace', fontsize=9),
-            )
-    wc = WordCloud(width=800, height=400,
-                    background_color='white',
-                    colormap='inferno'
-            ).generate_from_frequencies(
-        df2['in_reply_to_screen_name'].value_counts().to_dict())
+        [rs['hub_user_tweets_n'], rs['ntotal'] - rs['hub_user_tweets_n']],
+        labels=['@' + rs['hub_user_screen_name'], 'Others'],
+        explode=(0, 0.1),
+        colors=('lightcoral', 'lightskyblue'),
+        autopct='%1.1f%%',
+        shadow=True,
+        radius=1,
+        startangle=180 - 7.2,
+        labeldistance=1.15,
+        textprops=dict(ha='center', family='monospace', fontsize=9),
+    )
+    wc = WordCloud(
+        width=800, height=400, background_color='white',
+        colormap='inferno').generate_from_frequencies(
+            df2['in_reply_to_screen_name'].value_counts().to_dict())
     ax2.imshow(wc, interpolation="bilinear")
     ax2.set_axis_off()
     ax1.text(x=0, y=-1.6, s='(a) Shares of tweets', ha='center', fontsize=9.5)
-    ax2.text(x=0.5, y=-0.34, s='(b) Word cloud of screen names of the replied',
-        ha='center', fontsize=9.5, transform=ax2.transAxes)
-    plt.tight_layout(rect=[0,0.1,1,1])
+    ax2.text(
+        x=0.5,
+        y=-0.34,
+        s='(b) Word cloud of screen names of the replied',
+        ha='center',
+        fontsize=9.5,
+        transform=ax2.transAxes)
+    plt.tight_layout(rect=[0, 0.1, 1, 1])
     plt.savefig(ofn)
-
