@@ -193,8 +193,15 @@ def tw_type_share(df, p=0.1, output='generized-types-of-tweets.pdf'):
 def diffusion_ccdf(df,
                    output='generized-diffusion-ccdf.pdf'):
     gps = df.groupby(['article_id', 'site_label'])
-    by_ntweets = gps.tweet_raw_id.nunique().rename('ntweets')
-    by_nusers = gps.user_raw_id.nunique().rename('nusers')
+    if 'tweet_raw_id' in df.columns:
+        by_ntweets = gps.tweet_raw_id.nunique().rename('ntweets')
+    elif 'tweet_id' in df.columns:
+        by_ntweets = gps.tweet_id.nunique().rename('ntweets')
+
+    if 'user_raw_id' in df.columns:
+        by_nusers = gps.user_raw_id.nunique().rename('nusers')
+    else 'tweet_user_id' in df.columns:
+        by_nusers = gps.tweet_user_id.nunique().rename('nusers')
     s11 = by_ntweets.loc[:, 0].reset_index(drop=True)
     s12 = by_ntweets.loc[:, 1].reset_index(drop=True)
     s21 = by_nusers.loc[:, 0].reset_index(drop=True)
@@ -205,7 +212,7 @@ def diffusion_ccdf(df,
     s22 = ccdf(s22)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6.4, 2.4))
     ax1.plot(s11.index, s11.values, label='Claim')
-    ax1.plot(s21.index, s21.values, label='Fact checking')
+    ax1.plot(s12.index, s12.values, label='Fact checking')
     ax1.set_xscale('log')
     ax1.set_yscale('log')
     ax1.set_xlabel('$n_1$')
@@ -217,7 +224,7 @@ def diffusion_ccdf(df,
         horizontalalignment='center',
         transform=ax1.transAxes)
     ax1.legend(fontsize=9)
-    ax2.plot(s12.index, s12.values, label='Claim')
+    ax2.plot(s21.index, s21.values, label='Claim')
     ax2.plot(s22.index, s22.values, label='Fact checking')
     ax2.set_xscale('log')
     ax2.set_yscale('log')
@@ -232,3 +239,6 @@ def diffusion_ccdf(df,
     ax2.legend(fontsize=9)
     plt.tight_layout(rect=[0, 0.06, 1, 1], w_pad=2.4)
     plt.savefig(output)
+
+
+
