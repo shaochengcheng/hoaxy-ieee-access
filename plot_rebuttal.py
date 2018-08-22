@@ -200,7 +200,7 @@ def diffusion_ccdf(df,
 
     if 'user_raw_id' in df.columns:
         by_nusers = gps.user_raw_id.nunique().rename('nusers')
-    else 'tweet_user_id' in df.columns:
+    elif 'tweet_user_id' in df.columns:
         by_nusers = gps.tweet_user_id.nunique().rename('nusers')
     s11 = by_ntweets.loc[:, 0].reset_index(drop=True)
     s12 = by_ntweets.loc[:, 1].reset_index(drop=True)
