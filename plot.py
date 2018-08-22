@@ -12,6 +12,7 @@ from analysis import *
 from correlation import *
 import logging
 import json
+from scipy.stats import sem
 
 DATA_DIR = 'data0104'
 # fake
@@ -941,3 +942,26 @@ def case_study3(fn='case_studies_III.json', ofn='case-studies-III.pdf'):
         transform=ax2.transAxes)
     plt.tight_layout(rect=[0, 0.1, 1, 1])
     plt.savefig(ofn)
+
+
+def se_pd_vs_ftw(fn='t_snopes_mv_final.csv'):
+    fn = join(DATA_DIR, fn)
+    df = pd.read_csv(fn, parse_dates=['f_pd', 's_pd', 's_ftw', 'f_ftw'])
+    df['dt_snopes'] = (df.s_ftw - df.s_pd) / np.timedelta64(1, 'h')
+    df['dt_fake'] = (df.f_ftw - df.f_pd) / np.timedelta64(1, 'h')
+    df = df.sort_values('dt_snopes', ascending=True)
+    df = df.iloc[2:]
+    print('snopes (exclude two exceptions): mean={} hour, sem={}'.format(
+          df.dt_snopes.mean(), sem(df.dt_snopes.values)))
+    print('fake (exclude two exceptions): mean={} hour, sem={}'.format(
+          df.dt_fake.mean(), sem(df.dt_fake.values)))
+
+
+def se_survival(fn='t_snopes_match_volume0104.csv'):
+    fn = join(DATA_DIR, fn)
+
+    df = pd.read_csv(fn, parse_dates=['f_pd', 's_pd'])
+    T1 = (df.s_pd - df.f_pd) / np.timedelta64(1, 'h')
+    T2 = df.f_n
+    print('survival time: mean={}, sem={}'.format(T1.mean(), sem(T1.values)))
+    print('survival tweets: mean={}, sem={}'.format(T2.mean(), sem(T2.values)))

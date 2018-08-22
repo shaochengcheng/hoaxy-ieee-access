@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import timedelta
 from datetime import datetime
-import botornot
 import logging
 import os
 
